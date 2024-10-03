@@ -1,0 +1,80 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                Int                 @id @default(autoincrement())
+  username          String              @unique
+  email             String              @unique
+  passwordHash      String
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  uploadedFiles     UploadedFile[]
+  databaseConfigs   DatabaseConfig[]
+  columnMappings    ColumnMapping[]
+  transformations   Transformation[]
+}
+
+model UploadedFile {
+  id                Int                 @id @default(autoincrement())
+  fileName          String
+  originalName      String
+  mimeType          String
+  size              Int
+  path              String
+  uploadedAt        DateTime            @default(now())
+  userId            Int
+  user              User                @relation(fields: [userId], references: [id])
+  columnMappings    ColumnMapping[]
+  transformations   Transformation[]
+}
+
+model DatabaseConfig {
+  id                Int                 @id @default(autoincrement())
+  name              String
+  type              String  // e.g., "MySQL", "PostgreSQL", "SQLite"
+  host              String?
+  port              Int?
+  username          String?
+  passwordHash      String?
+  databaseName      String
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  userId            Int
+  user              User                @relation(fields: [userId], references: [id])
+  columnMappings    ColumnMapping[]
+}
+
+model ColumnMapping {
+  id                Int                 @id @default(autoincrement())
+  fileColumnName    String
+  dbColumnName      String
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  userId            Int
+  user              User                @relation(fields: [userId], references: [id])
+  uploadedFileId    Int
+  uploadedFile      UploadedFile        @relation(fields: [uploadedFileId], references: [id])
+  databaseConfigId  Int
+  databaseConfig    DatabaseConfig      @relation(fields: [databaseConfigId], references: [id])
+}
+
+model Transformation {
+  id                Int                 @id @default(autoincrement())
+  name              String
+  description       String?
+  functionBody      String  // Stored as a string, will be evaluated at runtime
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  userId            Int
+  user              User                @relation(fields: [userId], references: [id])
+  uploadedFileId    Int
+  uploadedFile      UploadedFile        @relation(fields: [uploadedFileId], references: [id])
+}
